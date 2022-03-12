@@ -1,39 +1,67 @@
-#define DELAY 10
-
 
 #include <Servo.h>
 
 Servo ServoX;
 
-byte deg;
-byte rec;
-byte ang;
-byte lastDeg = 0;
-byte currDeg;
-
-unsigned long curr_millis;
-unsigned long last_millis = 0;
-
-byte last_deg = 0;
 byte curr_deg;
 
-void setup() {
+const byte numChars = 32;
+char receivedChars[numChars];
 
+boolean newData = false;
+
+void setup() {
   ServoX.attach(9);
   Serial.begin(115200);
   Serial.setTimeout(1);
-
 }
 
 void loop() {
-  curr_millis = millis();
+    recvWithStartEndMarkers();
+    showNewData();
+}
+
+void recvWithStartEndMarkers() {
+    static boolean recvInProgress = false;
+    static byte ndx = 0;
+    char startMarker = '<';
+    char endMarker = '>';
+    char rc;
+ 
+    while (Serial.available() > 0 && newData == false) {
+        rc = Serial.read();
+
+        if (recvInProgress == true) {
+            if (rc != endMarker) {
+                receivedChars[ndx] = rc;
+                ndx++;
+                if (ndx >= numChars) {
+                    ndx = numChars - 1;
+                }
+            }
+            else {
+                receivedChars[ndx] = '\0'; // terminate the string
+                recvInProgress = false;
+                ndx = 0;
+                newData = true;
+            }
+        }
+
+        else if (rc == startMarker) {
+            recvInProgress = true;
+        }
+    }
+}
+
+void showNewData() {
+    if (newData == true) {
+
+
+   curr_deg = atoi(receivedChars);
+      
+      if(curr_deg >0 && curr_deg <=180)ServoX.write(curr_deg);
   
-  while (!Serial.available());
-
-  curr_deg = Serial.readString().toInt();
-
-  ServoX.write(curr_deg);
-  Serial.print(curr_deg);
- delay(5);
-
+        Serial.println(receivedChars);
+        newData = false;
+    }
 }
