@@ -15,9 +15,6 @@ center_right = 325
 lower_black = np.array([0, 0, 0])
 upper_black = np.array([180, 255, 100])
 
-lower_other = np.array([94, 80, 50])
-upper_other = np.array([130, 255, 255])
-
 
 counter = 0
 
@@ -43,26 +40,16 @@ while True:
     blur = cv.GaussianBlur(frameHSV, (3,3), 5)
 
     mask_black = cv.inRange(blur, lower_black, upper_black)
-    
-    mask_other = cv.inRange(blur, lower_other, upper_other)
+
     
 
     contours_black, hierarchy_black = cv.findContours(mask_black, cv.RETR_TREE ,cv.CHAIN_APPROX_NONE)
-
-    contours_other, hierarchy_other = cv.findContours(mask_other, cv.RETR_TREE ,cv.CHAIN_APPROX_NONE)
 
 
     
     cv.line(frame, (center_left, 500), (center_left, 0), (0, 0, 255), 10)
     cv.line(frame, (center_right, 500), (center_right, 0), (0, 0, 255), 10)
 
-
-
-
-    if len(contours_other) != 0:
-
-        contour = max(contours_other, key = cv.contourArea)
-        cv.drawContours(frame, contour, -1, (255, 0, 0), 3)
 
 
     if len(contours_black)>0:
