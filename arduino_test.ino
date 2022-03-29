@@ -1,6 +1,15 @@
+#define FWD 5
+#define BWD 6
+#define L_EN 7
+#define R_EN 8
+
+#define DEL 1000
 
 
+const byte pwmMin = 20;
+const byte pwmMax = 255;
 const byte numChars = 8;
+byte PWM = 0;
 char receivedChars[numChars];
 char tempChars[numChars];        // temporary array for use when parsing
 
@@ -9,6 +18,12 @@ char messageFromPC[numChars] = {0};
 int rec1 = 0;
 int rec2 = 0;
 
+//time related
+unsigned long currMillis;
+unsigned long lastMillis = 0;
+
+
+
 boolean newData = false;
 
 //============
@@ -16,17 +31,26 @@ boolean newData = false;
 void setup() {
     Serial.begin(115200);
     Serial.setTimeout(1);
-}
+    pinMode(FWD, OUTPUT);
+    pinMode(BWD, OUTPUT);
+    analogWrite(FWD, 0);
+    analogWrite(BWD, 0);
+
+    digitalWrite(L_EN, 1);
+    digitalWrite(R_EN, 1);
+    
+    }
 
 //============
 
 void loop() {
+    currMillis = millis();
     recvWithStartEndMarkers();
-    if (newData == true) {
-        strcpy(tempChars, receivedChars);
-        parseData();
-        showParsedData();
-        newData = false;
+    confirmData();
+    
+    if(currMillis - lastMillis >= DEL){
+    driveMotor();
+    lastMillis = currMillis;
     }
 }
 
@@ -84,7 +108,34 @@ void parseData() {      // split the data into its parts
 void showParsedData() {
     Serial.print("rec1: ");
     Serial.print(rec1);
-    Serial.print("rec2: ");
-    Serial.print(rec2);
+   // Serial.print("rec2: ");
+    //Serial.print(rec2);
 
 }
+
+void confirmData(){
+  if (newData == true) {
+        strcpy(tempChars, receivedChars);
+        parseData();
+        showParsedData();
+        newData = false;
+    }
+  }
+
+void driveMotor(){
+  
+if(analogRead(FWD)!=0) analogWrite(BWD, 0);
+else if (analogRead(BWD)!=0) analogWrite(FWD, 0);
+
+
+byte speedMot = abs(90-rec1);
+PWM = map(speedMot ,0, 90, pwmMax, pwmMin);
+analogWrite(FWD, PWM);
+Serial.println("FWD PWM ");
+Serial.print(PWM);
+
+
+  }
+
+
+  
